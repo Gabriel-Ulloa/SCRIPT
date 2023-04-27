@@ -18,7 +18,7 @@ if [ -f "/etc/systemd/system/tpot.service" ]; then
         sleep 3
         exit 1
     else
-        echo "Echale al root-INSTALANDO..."
+        echo "Plataforma T-Pot: OK"
     fi
 else
     echo "Este script solo funciona en la plataforma T-Pot."
@@ -45,14 +45,18 @@ else
     MINI
 fi
 #
-#
-CRON_DIR="/etc/crontab"
 #Configuraciones
 #Cambiar Hora a UTC
+CRON_DIR="/etc/crontab"
+#
 echo "Estableciendo zona horaria..."
 timedatectl set-timezone UTC
 timedatectl set-ntp true
 echo "ok"
+#
+#
+toilet -f ivrit 'Instalando dependencias...'
+apt install -y tcpdump wireshark-common
 #
 echo "Directorios y scripts"
 mkdir -vp /home/tsec/CHECKS \
