@@ -1,0 +1,1 @@
+git clone https://github.com/Gabriel-Ulloa/SCRIPT.git && cd SCRIPT && ./START.sh
