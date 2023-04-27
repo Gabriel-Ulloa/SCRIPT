@@ -1,10 +1,20 @@
 #!/bin/bash
 #
+#Ejecutar en root
+# Got root?
+myWHOAMI=$(whoami)
+if [ "$myWHOAMI" != "root" ]
+  then
+    echo "Se necesita la contarseña ..."
+    sudo ./$0
+    exit
+fi
+#
 #CHECHEO DE PLATAFORMA
 if [ -f "/etc/systemd/system/tpot.service" ]; then
     echo "El archivo se encuentra en la ruta especificada."
     if [ -f "/home/tsec/PCAP/tcpdump.pcap" ]; then
-        echo "Este script solo se puede ejecutar una vez"
+        echo "Este script solo se ejectuta una vez despues de la instalacion"
         sleep 3
         exit 1
     else
@@ -16,18 +26,26 @@ else
     sleep 5
     exit 1
 fi
-#Este script solo se ejectuta una vez despues de la instalacion
-#Ejecutar en root
-# Got root?
-myWHOAMI=$(whoami)
-if [ "$myWHOAMI" != "root" ]
-  then
-    echo "Need to run as root ..."
-    sudo ./$0
-    exit
+#Checar Contenedor Cowrie
+#Mini menu
+function MINI(){
+    echo "El contenedor "cowrie" no se encuentra"
+    echo "Posibles causas:"
+    echo "1. La instalacion de T-Pot es diferente a "STANDARD""
+    echo "2. La instalacion de T-Pot no funciona"
+    echo "Se recomienda volver a instalar T-Pot "
+    echo "Saliendo.."
+    sleep 5
+    exit 1
+}
+#
+if docker ps -a | grep cowrie > /dev/null; then
+    echo "El contenedor está en ejecución."
+else
+    MINI
 fi
-#Checar Plataforma T-Pot
-
+#
+#
 CRON_DIR="/etc/crontab"
 #Configuraciones
 #Cambiar Hora a UTC
@@ -39,7 +57,7 @@ echo "ok"
 echo "Directorios y scripts"
 mkdir -vp /home/tsec/CHECKS \
           /home/tsec/PCAP
-
+#
 echo "Configurando Demonios..."
 sed -i -e '$i\/home/tsec/SCRIPT/tcpdump_start.sh &' /etc/rc.local
 #
