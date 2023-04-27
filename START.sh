@@ -10,7 +10,8 @@ if [ "$myWHOAMI" != "root" ]
     sudo ./$0
     exit
 fi
-#
+#Checar Plataforma T-Pot
+
 CRON_DIR="/etc/crontab"
 #Configuraciones
 #Cambiar Hora a UTC
