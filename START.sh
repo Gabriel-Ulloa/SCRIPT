@@ -5,7 +5,7 @@
 myWHOAMI=$(whoami)
 if [ "$myWHOAMI" != "root" ]
   then
-    echo "Se necesita la contarseña ..."
+    toilet -f future 'Password:'
     sudo ./$0
     exit
 fi
