@@ -12,7 +12,7 @@ fi
 #
 #CHECHEO DE PLATAFORMA
 if [ -f "/etc/systemd/system/tpot.service" ]; then
-    echo "El archivo se encuentra en la ruta especificada."
+    toilet -f pagga 'plataforma T-POT'
     if [ -f "/home/tsec/PCAP/tcpdump.pcap" ]; then
         echo "Este script solo se ejectuta una vez despues de la instalacion"
         sleep 3
