@@ -12,7 +12,7 @@ fi
 #
 #CHECHEO DE PLATAFORMA
 if [ -f "/etc/systemd/system/tpot.service" ]; then
-    toilet -f pagga 'plataforma T-POT'
+    toilet -f pagga 'Plataforma T-POT'
     if [ -f "/home/tsec/PCAP/tcpdump.pcap" ]; then
         echo "Este script solo se ejectuta una vez despues de la instalacion"
         sleep 3
@@ -23,7 +23,7 @@ if [ -f "/etc/systemd/system/tpot.service" ]; then
 else
     echo "Este script solo funciona en la plataforma T-Pot."
     echo "Saliendo..."
-    sleep 5
+    sleep 3
     exit 1
 fi
 #Checar Contenedor Cowrie
@@ -32,7 +32,7 @@ function MINI(){
     echo "El contenedor "cowrie" no se encuentra"
     echo "Posibles causas:"
     echo "1. La instalacion de T-Pot es diferente a "STANDARD""
-    echo "2. La instalacion de T-Pot no funciona"
+    echo "2. T-Pot no esta funcionando correctamente"
     echo "Se recomienda volver a instalar T-Pot "
     echo "Saliendo.."
     sleep 5
