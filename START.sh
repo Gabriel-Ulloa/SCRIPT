@@ -32,10 +32,10 @@ function MINI(){
     echo "El contenedor "cowrie" no se encuentra"
     echo "Posibles causas:"
     echo "1. La instalacion de T-Pot es diferente a "STANDARD""
-    echo "2. T-Pot no esta funcionando correctamente"
+    echo "2. La plataforma T-Pot presenta fallas"
     echo "Se recomienda volver a instalar T-Pot "
     echo "Saliendo.."
-    sleep 5
+    sleep 3
     exit 1
 }
 #
@@ -78,8 +78,9 @@ function CHOUR(){
 echo >> $CRON_DIR
 echo "#Stop tcpdump & check captures" >> $CRON_DIR
 echo $(CMIN)  $(expr $(CHOUR) - 1) "* * 1-6      root    killall tcpdump && sleep 30 && /home/tsec/SCRIPT/checker.sh" >> $CRON_DIR
-
 #Finished
-toilet -f ivrit '...Instalado' 
+toilet -f ivrit '...Instalado'
+dialog --keep-window --no-ok --no-cancel --backtitle "$myBACKTITLE" --title "[ Reiniciando el sistema... ]" --pause "" 7 80 5
+clear 
 sleep 3
 reboot
