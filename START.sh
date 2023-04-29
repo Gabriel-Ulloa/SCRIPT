@@ -22,6 +22,8 @@ if [ -f "/etc/systemd/system/tpot.service" ]; then
     fi
 else
     echo "Este script solo funciona en la plataforma T-Pot."
+    cd ..
+    rm -r SCRIPT/
     echo "Saliendo..."
     sleep 3
     exit 1
