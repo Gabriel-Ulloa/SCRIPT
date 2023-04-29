@@ -25,6 +25,7 @@ else
     cd ..
     rm -r SCRIPT/
     echo "Saliendo..."
+    cd ..
     sleep 3
     exit 1
 fi
