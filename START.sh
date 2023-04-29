@@ -56,6 +56,7 @@ echo "ok"
 #
 #
 toilet -f ivrit 'Instalando dependencias...'
+sleep 2
 apt install -y tcpdump wireshark-common
 #
 echo "Directorios y scripts"
