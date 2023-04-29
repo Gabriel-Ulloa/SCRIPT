@@ -15,7 +15,7 @@ IPS_FOUND="IPs"
 DIR_CHECK="/home/tsec/CHECKS/check_"$(date +"%Y-%m-%d_%H-%M")/""
 COWRIE_JSON="/data/cowrie/log/cowrie.json"
 PCAP="/home/tsec/PCAP/tcpdump.pcap"
-SAMPLE="sample_"$(date +"%Y-%m-%d_%H-%M")""
+SAMPLE="sample_"$(date +"%Y-%m-%d_%H-%M")".pcap"
 temp_1=$(mktemp)
 #
 mkdir $DIR_CHECK && cp $COWRIE_JSON $DIR_CHECK
