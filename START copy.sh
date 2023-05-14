@@ -14,18 +14,23 @@ fi
 if [ -f "/etc/systemd/system/tpot.service" ]; then
     toilet -f pagga 'Plataforma T-POT'
     if [ -f "/home/tsec/PCAP/tcpdump.pcap" ]; then
-        echo "Este script solo se ejectuta una vez despues de la instalacion"; sleep 3; exit 1
+        echo "Este script solo se ejectuta una vez despues de la instalacion"
+        sleep 3
+        exit 1
     else
         echo "Plataforma T-Pot: OK"
     fi
 else
-    echo "Este script solo funciona en la plataforma T-Pot."; cd ..; rm -r SCRIPT/; echo "Saliendo..."; sleep 3
+    echo "Este script solo funciona en la plataforma T-Pot."
+    cd ..
+    rm -r SCRIPT/
+    echo "Saliendo..."
+    sleep 3
     exit 1
 fi
 #Checar Contenedor Cowrie
-if docker ps -a | grep cowrie > /dev/null; then
-    echo "Cowrie is running."
-else
+#Mini menu
+function MINI(){
     echo "El contenedor "cowrie" no se encuentra"
     echo "Posibles causas:"
     echo "1. La instalacion de T-Pot es diferente a "STANDARD""
@@ -34,40 +39,22 @@ else
     echo "Saliendo.."
     sleep 3
     exit 1
-fi
-#
-#Estableciendo zona horaria..."
-timedatectl set-timezone UTC
-timedatectl set-ntp true
-#
-CRON_DIR="/etc/crontab"
-vt_toml="/root/.vt.toml"
-#Configuraciones
-#Configurando VIRUSTOTAL
-wget https://github.com/VirusTotal/vt-cli/releases/download/0.13.0/Linux64.zip &&unzip Linux64.zip && rm Linux64.zip
-#
-function vt_init(){
-    /home/tsec/PRUEBA/vt init #borar PRUEBA y poner script
 }
 #
-while true
-    do
-        if [ -f "$vt_toml" ]; then
-        toilet -f future 'OK'; sleep 2
-        break         
-        else
-        toilet -f future 'Enter a valid API key'; sleep 3; clear; vt_init
-        fi
-    done
-#d7b8d0be41b03de429347d44f5c34814003bb2584a62803cd1921fc915ee4554
-#Sincronizando Nube
-echo "Instalando rclone"
-sudo -v ; curl https://rclone.org/install.sh | sudo bash
-toilet -f ivrit "rclone"
-rclone config
-#rclone sync /home/tsec/CHECKS nexcloud:PRUEBA_tsec ###CAMBIALA a los crons al terminar
-#rclone mkdir nexcloud:Exito
-#https://cloudsecuritylab.dev/remote.php/dav/files/lab/
+if docker ps -a | grep cowrie > /dev/null; then
+    echo "El contenedor está en ejecución."
+else
+    MINI
+fi
+#
+#Configuraciones
+#Cambiar Hora a UTC
+CRON_DIR="/etc/crontab"
+#
+echo "Estableciendo zona horaria..."
+timedatectl set-timezone UTC
+timedatectl set-ntp true
+echo "ok"
 #
 #
 toilet -f ivrit 'Instalando dependencias...'
