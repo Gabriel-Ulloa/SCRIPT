@@ -47,7 +47,7 @@ vt_toml="/root/.vt.toml"
 wget https://github.com/VirusTotal/vt-cli/releases/download/0.13.0/Linux64.zip &&unzip Linux64.zip && rm Linux64.zip
 #
 function vt_init(){
-    /home/tsec/PRUEBA/vt init #borar PRUEBA y poner script
+    /home/tsec/SCRIPT/vt init
 }
 #
 while true
