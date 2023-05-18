@@ -74,7 +74,7 @@ function CMIN(){
 }
 #
 function CHOUR(){
-    grep -A 1 Daily $CRON_DIR |head -n 2 | tail -n 1 |cut -c 4-5
+    grep -A 1 Daily $CRON_DIR |head -n 2 | tail -n 1 |cut -c 3-4
 }
 #
 echo >> $CRON_DIR
