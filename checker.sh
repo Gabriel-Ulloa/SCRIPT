@@ -50,7 +50,7 @@ do
             rm $IPS_FOUND && cat $temp_2 | sort | uniq > HASHES.txt
             hash_vt
             sleep 10
-            rclone sync /home/tsec/CHECKS nexcloud:PRUEBA_tsec
+            rclone sync /home/tsec/CHECKS nextcloud:PRUEBA_tsec
             exit
         fi
         echo "Direccciones IP encontradas" #AQUI COMIENZA EL BUCLE 
