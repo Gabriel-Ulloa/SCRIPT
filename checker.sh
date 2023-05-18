@@ -21,7 +21,7 @@ temp_2=$(mktemp)
 #
 mkdir $DIR_CHECK && cp $COWRIE_JSON $DIR_CHECK
 cp $PCAP $DIR_CHECK
-cd $DIR_CHECK
+cd $DIR_CHECK && mkdir VirusTotal
 #
 cat $COWRIE_JSON |grep -i $FILE_DOWNLOAD |grep -oe $IP_REGEX |grep -oe $HIP_REGEX | sort | uniq >$temp_1
 cat $COWRIE_JSON |grep -i $FILE_UPLOAD |grep -oe $IP_REGEX |grep -oe $HIP_REGEX | sort | uniq >>$temp_1
@@ -32,7 +32,7 @@ file="HASHES.txt"
 counter=0
 while IFS= read -r hash; do
     #Consultando hash por hash
-    echo "consultando..." && /home/tsec/SCRIPT/vt file $hash --format json >$(echo $hash)_"$(date +"%Y-%m-%d_%H:%M:%S")".json && sleep .5
+    echo "consultando..." && /home/tsec/SCRIPT/vt file $hash --format json > VirusTotal/$(echo $hash)_"$(date +"%Y-%m-%d_%H:%M:%S")".json && sleep .5
     counter=$((counter + 1))
     #Verificar si se han revisado doscientas líneas
     if ((counter % 200 == 0)); then
