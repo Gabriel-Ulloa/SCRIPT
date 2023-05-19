@@ -70,7 +70,8 @@ rclone config
 #https://cloudsecuritylab.dev/remote.php/dav/files/lab/
 #
 #
-toilet -f ivrit 'Instalando dependencias...'
+toilet -f ivrit 'Instalando...'
+echo "#Instalando dependencias"
 sleep 2
 apt install -y tcpdump wireshark-common
 #
