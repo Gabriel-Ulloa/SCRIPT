@@ -1,72 +1,256 @@
 #!/bin/bash
 #
-COWRIE_JSON="cowrie.json"
-FILE_DOWNLOAD=".file_download"
-FILE_UPLOAD=".file_upload"
-SESSIONS="sessions.txt"
-SESSION_REGEX="[ssion]\+.[:]\+.[0-z]\+"
-TIME_REGEX="[a-z]\+.[:]\+.[0-9]\+.[-]\+.[0-9]\+.[0-Z]\+.[0-Z]\+"
-IP_REGEX="[:-z]\+.[:]\+.[0-9]\+.[.]\+.[0-9]\+.[0-9]\+.[0-9]\+"
-HIP_REGEX="[0-9]\+.[0-9]\+.[0-9]\+.[0-9]\+"
-SHA_REGEX="[shasum]\+.[:]\+.[0-z]\+"
-TIME_0="time_0.tmp"
-TIME_N="time_n.tmp"
-IPS_FOUND="IPs"
+#tcpdump -r tcpdump.pcap -w nuevo_archivo.pcap host 167.99.171.68
+ #
 DIR_CHECK="/home/tsec/CHECKS/check_"$(date +"%Y-%m-%d_%H-%M")/""
-COWRIE_JSON="/data/cowrie/log/cowrie.json"
 PCAP="/home/tsec/PCAP/tcpdump.pcap"
 SAMPLE="sample_"$(date +"%Y-%m-%d_%H-%M")".pcap"
-temp_1=$(mktemp)
-temp_2=$(mktemp)
+SAMPLE_TEMP="sample.temp"
+HONEYS="honeypots"
+TIME_0="time_0.txt"
+TIME_N="time_n.txt"
+IPS_FOUND="IPs.txt"
+IPS_TEMP="IPs.tmp"
+HASH_TEMP="HASH.tmp"
+HASHES="hashes.txt"
 #
-mkdir $DIR_CHECK && cp $COWRIE_JSON $DIR_CHECK
-cp $PCAP $DIR_CHECK
-cd $DIR_CHECK && mkdir VirusTotal
+mkdir $DIR_CHECK && cd $DIR_CHECK && mkdir tcpdump && cp $PCAP tcpdump/ && sleep 10
+mkdir $HONEYS && cd $HONEYS
+dionaea
+cowrie
+ADBhoney
+rclone sync /home/tsec/CHECKS nextcloud:PRUEBA_2 && sleep 60
+exit
 #
-cat $COWRIE_JSON |grep -i $FILE_DOWNLOAD |grep -oe $IP_REGEX |grep -oe $HIP_REGEX | sort | uniq >$temp_1
-cat $COWRIE_JSON |grep -i $FILE_UPLOAD |grep -oe $IP_REGEX |grep -oe $HIP_REGEX | sort | uniq >>$temp_1
-sed '/^$/d' $temp_1 > $IPS_FOUND
-#
+#####VIRUSTOTAL-CHECKER################
 function hash_vt(){
-file="HASHES.txt"
-counter=0
-while IFS= read -r hash; do
-    #Consultando hash por hash
-    echo "consultando..." && /home/tsec/SCRIPT/vt file $hash --format json > VirusTotal/$(echo $hash)_"$(date +"%Y-%m-%d_%H:%M:%S")".json && sleep .5
-    counter=$((counter + 1))
-    #Verificar si se han revisado doscientas líneas
-    if ((counter % 200 == 0)); then
-        echo "Esperando 1 minuto..."
-        sleep 60
-    fi
-done < "$file"
+    file="hashes.txt"
+    counter=0
+    while IFS= read -r hash; do
+        echo "consultando..." && /home/tsec/SCRIPT/vt file $HASHES --format json > virustotal/$(echo $hash)_"$(date +"%Y-%m-%d_%H:%M:%S")".json && sleep .5
+        counter=$((counter + 1))
+        #Verificar si se han revisado doscientas líneas
+        if ((counter % 200 == 0)); then
+            echo "Esperando 1 minuto..."
+            sleep 60
+        fi
+    done < "$file"
 }
 #
-while true 
-do
-    for file in $IPS_FOUND; do
-        if [ ! -s "$file" ]; then
-            echo "El archivo $file está vacío. Saliendo del bucle..."
-            rm $IPS_FOUND && cat $temp_2 | sort | uniq > HASHES.txt
-            hash_vt
-            sleep 10
-            rclone sync /home/tsec/CHECKS nextcloud:PRUEBA_tsec
-            exit
-        fi
-        echo "Direccciones IP encontradas" #AQUI COMIENZA EL BUCLE 
-        mkdir $(sed '2,$d' $IPS_FOUND) #HACE UNA CARPETA CON EL NOMBRE DE LA PRIMER IP DEL DOCUMENTO IPS
-        cp $COWRIE_JSON ./$(sed '2,$d' $IPS_FOUND) #COPIA cowrie.json ORIGINAL Y A LA CARPETA RECIEN CREADA ^
-        cp $IPS_FOUND ./$(sed '2,$d' $IPS_FOUND) #COPIA EL ARCHIVO IPS A LA CARPETA ^
-        cd $(sed '2,$d' $IPS_FOUND) #SE MUEVE DENTRO DE LA CARPETA FCREADA
-        #SE BUSCA LA IP ENCONTRADA EN CUESTION Y SE HACE LA BUSQUEDA DE LOS TIEMPOS 0 Y N DE INTERACCION Y SE LE AGREGA LOS MILISEGUNDOS 
-        cat $COWRIE_JSON |grep -i $(sed '2,$d' $IPS_FOUND) |sed '2,$d' |grep -oe $TIME_REGEX |cut -c 13-34 |sed 's/T/ /g' >$TIME_0 && sed -i 's/$/:00/' $TIME_0
-        cat $COWRIE_JSON |grep -i $(sed '2,$d' $IPS_FOUND) |sed -n '$p' |grep -oe $TIME_REGEX |cut -c 13-34 |sed 's/T/ /g' >$TIME_N && sed -i 's/$/:59/' $TIME_N
-        #SE HACE EL RECORTE DEL PCAP CON LOS TIEMPOS OBTENIDOS DE LA IP ANALIZADA EN cowrie.json ^
-        editcap -A "$(cat $TIME_0)" -B "$(cat $TIME_N)" $PCAP $SAMPLE #se crea un pcap con el nombre sample
-        awk 'NR>1{print}' $IPS_FOUND >../$IPS_FOUND #BORRA LA IP OBTENIDA Y DEJA LAS DEMAS IPS PARA CONTINUAR EL BUCLE CON LAS IPS RESTANTES
-        head -n 1 $IPS_FOUND >IP.txt && rm $IPS_FOUND #DEJA UN ARCHIVO IP.txt SOLO CON LA IP ENCONTRADA
-        grep $(cat IP.txt) cowrie.json |grep .downl |grep -oe "[shasum]\+.[:]\+.[0-z]\+" |cut -c 10-74 | sort | uniq >HASH.txt 
-        cat HASH.txt >> $temp_2
-        cd ..
-    done
-done
+#DIONAEA############################################################################################
+function dionaea(){
+    DIONAEA_JSON="/data/dionaea/log/dionaea.json"
+    DIONAEA_SQLITE="/data/dionaea/log/dionaea.sqlite"
+    DIONAEA_DIR="dionaea_"$(date +"%Y-%m-%d_%H-%M")/""
+    SAMPLES_DIR="samples"
+    DOWNLOADS="downloads.csv"
+    CONNECTIONS="connections.csv"
+    #
+    mkdir $DIONAEA_DIR && cd $DIONAEA_DIR
+    mkdir $SAMPLES_DIR && cd $SAMPLES_DIR
+    #####Documentos###
+    cp $DIONAEA_JSON $DIONAEA_SQLITE .
+    sqlite3 -header -csv dionaea.sqlite "SELECT * FROM downloads" > $DOWNLOADS
+    sqlite3 -header -csv dionaea.sqlite "SELECT * FROM connections" > $CONNECTIONS
+    cut -d ',' -f 4 downloads.csv |sed '1d' | sort | uniq > $HASHES
+    #
+    function time_extractor(){
+        
+        DIONAEA_LOCAL="../../dionaea.json"
+        LOCAL_REGEX="[0-9]\+.[0-9]\+.[0-9]\+.[0-9]\+.[0-9]\+"
+
+        cp $IPS_FOUND $IPS_TEMP
+
+        while true 
+        do
+            for file in $IPS_TEMP; do
+                if [ ! -s "$file" ]; then
+                    echo "El archivo $file está vacío. Saliendo del bucle..."
+                    rm $IPS_TEMP
+                    return
+                fi
+                echo "Direccciones IP encontradas" 
+                mkdir $(sed '2,$d' $IPS_TEMP) 
+                cp $IPS_TEMP ./$(sed '2,$d' $IPS_TEMP) 
+                cd $(sed '2,$d' $IPS_TEMP) 
+                grep -i $(sed '2,$d' $IPS_TEMP) $DIONAEA_LOCAL |head -n 1 |grep -oe $LOCAL_REGEX |sed -n '$p' |sed 's/T/ /g' >$TIME_0 && sed -i 's/$/:00/' $TIME_0
+                grep -i $(sed '2,$d' $IPS_TEMP) $DIONAEA_LOCAL |tail -n 1 |grep -oe $LOCAL_REGEX |sed -n '$p' |sed 's/T/ /g' >$TIME_N && sed -i 's/$/:59/' $TIME_N
+                editcap -A "$(cat $TIME_0)" -B "$(cat $TIME_N)" $PCAP $SAMPLE_TEMP
+                #tcpdump -r tcpdump.pcap -w nuevo_archivo.pcap host 167.99.171.68
+                tcpdump -r $SAMPLE_TEMP -w $SAMPLE host $(sed '2,$d' $IPS_TEMP)
+                awk 'NR>1{print}' $IPS_TEMP > ../$IPS_TEMP 
+                head -n 1 $IPS_TEMP > $IPS_FOUND && rm $IPS_TEMP 
+                cd ..
+            done
+        done
+    }
+#
+    function hash_extractor(){
+       
+        CONNECTION_LOCAL="connection.txt"
+
+        cp $HASHES $HASH_TEMP
+
+        while true 
+        do
+            for file in $HASH_TEMP; do
+                if [ ! -s "$file" ]; then
+                    echo "El archivo $file está vacío. Saliendo del bucle..."
+                    rm $HASH_TEMP
+                    mkdir virustotal
+                    hash_vt
+                    cd ..
+                    mkdir malwares
+                    tar -czvf malwares/binaries_"$(date +"%Y-%m-%d")".tar.gz /data/dionaea/binaries/
+                    echo "Dionaea DONE" >DONE.txt
+                    cd ..
+                    return
+                fi
+                echo "Hashes encontrados" 
+                mkdir $(sed '2,$d' $HASH_TEMP) 
+                cp $HASH_TEMP ./$(sed '2,$d' $HASH_TEMP)
+                cd $(sed '2,$d' $HASH_TEMP)
+                grep $(sed '2,$d' $HASH_TEMP) ../$DOWNLOADS |cut -d ',' -f 1 > $CONNECTION_LOCAL && grep "^$(cat $CONNECTION_LOCAL)," "../$CONNECTIONS" |cut -d',' -f10 |sort |uniq > $IPS_FOUND
+                awk 'NR>1{print}' $HASH_TEMP >../$HASH_TEMP 
+                head -n 1 $HASH_TEMP > hash.txt && rm $HASH_TEMP
+                time_extractor
+                cd ..
+            done
+        done
+    }
+
+hash_extractor
+
+}
+###########################################################################################DIONAEA#
+#
+#COWRIE############################################################################################
+function cowrie(){
+    
+    COWRIE_JSON="/data/cowrie/log/dionaea.json"
+    COWRIE_LOCAL="cowrie.json"
+    FILE_DOWNLOAD=".file_download"
+    SHA_REGEX="[shasum]\+.[:]\+.[0-z]\+"
+    IP_REGEX="[:-z]\+.[:]\+.[0-9]\+.[.]\+.[0-9]\+.[0-9]\+.[0-9]\+"
+    HIP_REGEX="[0-9]\+.[0-9]\+.[0-9]\+.[0-9]\+"
+    TIME_REGEX="[a-z]\+.[:]\+.[0-9]\+.[-]\+.[0-9]\+.[0-Z]\+"
+    COWRIE_DIR="cowrie_"$(date +"%Y-%m-%d_%H-%M")/""
+    
+    mkdir $COWRIE_DIR && cd $COWRIE_DIR
+    mkdir $SAMPLES_DIR && cd $SAMPLES_DIR
+    cp $COWRIE_JSON .
+    grep -i $FILE_DOWNLOAD $COWRIE_LOCAL |grep -oe $SHA_REGEX |cut -c 10-74 | sort | uniq > $HASHES
+    #
+    function time_extractor(){
+
+        cp $IPS_FOUND $IPS_TEMP
+
+        while true 
+        do
+            for file in $IPS_TEMP; do
+                if [ ! -s "$file" ]; then
+                    echo "El archivo $file está vacío. Saliendo del bucle..."
+                    rm $IPS_TEMP
+                    return
+                fi
+                echo "Direccciones IP encontradas" 
+                mkdir $(sed '2,$d' $IPS_TEMP) 
+                cp $IPS_TEMP ./$(sed '2,$d' $IPS_TEMP) 
+                cd $(sed '2,$d' $IPS_TEMP) 
+                grep -i $(sed '2,$d' $IPS_TEMP) ../../$COWRIE_LOCAL |sed '2,$d' |grep -oe $TIME_REGEX |cut -c 13-28 |sed 's/T/ /g' >$TIME_0 && sed -i 's/$/:00/' $TIME_0
+                grep -i $(sed '2,$d' $IPS_TEMP) ../../$COWRIE_LOCAL |sed -n '$p' |grep -oe $TIME_REGEX |cut -c 13-28 |sed 's/T/ /g' >$TIME_N && sed -i 's/$/:59/' $TIME_N
+                editcap -A "$(cat $TIME_0)" -B "$(cat $TIME_N)" $PCAP $SAMPLE_TEMP
+                tcpdump -r $SAMPLE_TEMP -w $SAMPLE host $(sed '2,$d' $IPS_TEMP)
+                awk 'NR>1{print}' $IPS_TEMP > ../$$IPS_TEMP
+                head -n 1 $IPS_TEMP > IP.txt && rm $IPS_TEMP 
+                cd ..
+            done
+        done
+    }
+
+    function hash_extractor(){
+
+        cp $HASHES $HASH_TEMP
+
+        while true 
+        do
+            for file in $HASH_TEMP; do
+                if [ ! -s "$file" ]; then
+                    echo "El archivo $file está vacío. Saliendo del bucle..."
+                    rm $HASH_TEMP
+                    mkdir virustotal
+                    hash_vt
+                    cd ..
+                    mkdir malwares
+                    tar -czvf malwares/downloads_"$(date +"%Y-%m-%d")".tar.gz /data/cowrie/downloads/
+                    echo "Cowrie DONE" >DONE.txt
+                    cd ..
+                    return
+                fi
+                echo "Hashes encontrados" 
+                mkdir $(sed '2,$d' $HASH_TEMP) 
+                cp $HASH_TEMP ./$(sed '2,$d' $HASH_TEMP)
+                cd $(sed '2,$d' $HASH_TEMP)
+                grep $(sed '2,$d' $HASH_TEMP) ../$COWRIE_LOCAL |grep -oe $IP_REGEX |grep -oe $HIP_REGEX | sort | uniq > $IPS_FOUND
+                awk 'NR>1{print}' $HASH_TEMP >../$HASH_TEMP
+                head -n 1 $HASH_TEMP > hash.txt && rm $HASH_TEMP
+                time_extractor
+                cd ..
+            done
+        done
+    }
+
+hash_extractor
+
+}
+###########################################################################################################COWRIE
+#
+#ADBhoney########################################################################################################
+function ADBhoney(){
+    
+    ADB_JSON="/data/adbhoney/log/adbhoney.log"
+    ADB_LOCAL="adbhoney.json"
+    ADB_DIR="ADB_"$(date +"%Y-%m-%d_%H-%M")/""
+
+    mkdir $ADB_DIR && cd $ADB_DIR
+    mkdir $SAMPLES_DIR && cd $SAMPLES_DIR
+    cp $ADB_JSON .
+    grep -i ".session.connect" $ADB_LOCAL |grep -oe "[src_ip]\+.[:_ ]\+.[0-9]\+.[.]\+.[0-9]\+.[0-9]\+.[0-9]\+" |grep -v "172.18.0.2" |cut -d '"' -f 3 | sort | uniq > $IPS_FOUND
+    cp $IPS_FOUND $IPS_TEMP
+    grep -i ".file_download" $ADB_LOCAL |grep -oe "[shasum]\+.[:_ ]\+.[0-z]\+" |cut -c 11-74 | sort | uniq > $HASHES
+
+    function time_extractor(){
+
+        while true 
+        do
+            for file in $IPS_TEMP; do
+                if [ ! -s "$file" ]; then
+                    echo "El archivo $file está vacío. Saliendo del bucle..."
+                    rm $IPS_TEMP
+                    mkdir virustotal
+                    hash_vt
+                    cd ..
+                    mkdir malwares
+                    tar -czvf malwares/downloads_"$(date +"%Y-%m-%d")".tar.gz /data/adbhoney/downloads/
+                    echo "ADB DONE" >DONE.txt
+                    return
+                fi
+                echo "Direccciones IP encontradas" 
+                mkdir $(sed '2,$d' $IPS_TEMP) 
+                cp $IPS_TEMP ./$(sed '2,$d' $IPS_FOUND) 
+                cd $(sed '2,$d' $IPS_TEMP) 
+                grep -i $(sed '2,$d' $IPS_TEMP) ../$ADB_LOCAL |sed '2,$d' |grep -oe "[a-z]\+.[:_ ]\+.[0-9]\+.[-]\+.[0-9]\+.[0-Z]\+" |cut -c 14-29 |sed 's/T/ /g' >$TIME_0 && sed -i 's/$/:00/' $TIME_0
+                grep -i $(sed '2,$d' $IPS_TEMP) ../$ADB_LOCAL |sed -n '$p' |grep -oe "[a-z]\+.[:_ ]\+.[0-9]\+.[-]\+.[0-9]\+.[0-Z]\+" |cut -c 14-29 |sed 's/T/ /g' >$TIME_N && sed -i 's/$/:59/' $TIME_N
+                editcap -A "$(cat $TIME_0)" -B "$(cat $TIME_N)" $PCAP $SAMPLE_TEMP
+                tcpdump -r $SAMPLE_TEMP -w $SAMPLE host $(sed '2,$d' $IPS_TEMP)
+                awk 'NR>1{print}' $IPS_TEMP > ../$IPS_TEMP 
+                head -n 1 $IPS_TEMP > IP.txt && rm $IPS_TEMP 
+                cd ..
+            done
+        done
+    }
+
+time_extractor
+
+}
+###################################################################################################################ADBhoney

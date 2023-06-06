@@ -73,7 +73,7 @@ rclone config
 toilet -f ivrit 'Instalando...'
 echo "#Instalando dependencias"
 sleep 2
-apt install -y tcpdump wireshark-common sqlite3
+apt install -y tcpdump wireshark-common
 #
 echo "Directorios y scripts"
 mkdir -vp /home/tsec/CHECKS \
