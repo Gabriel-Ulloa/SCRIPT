@@ -72,7 +72,7 @@ function dionaea(){
                 #tcpdump -r tcpdump.pcap -w nuevo_archivo.pcap host 167.99.171.68
                 tcpdump -r $SAMPLE_TEMP -w $SAMPLE host $(sed '2,$d' $IPS_TEMP)
                 awk 'NR>1{print}' $IPS_TEMP > ../$IPS_TEMP 
-                head -n 1 $IPS_TEMP > IP.txt && rm $IPS_TEMP && rm $SAMPLE_TEMP
+                head -n 1 $IPS_TEMP > IP.txt && rm $IPS_TEMP
                 cd ..
             done
         done
@@ -157,7 +157,7 @@ function cowrie(){
                 editcap -A "$(cat $TIME_0)" -B "$(cat $TIME_N)" $PCAP $SAMPLE_TEMP
                 tcpdump -r $SAMPLE_TEMP -w $SAMPLE host $(sed '2,$d' $IPS_TEMP)
                 awk 'NR>1{print}' $IPS_TEMP > ../$IPS_TEMP
-                head -n 1 $IPS_TEMP > IP.txt && rm $IPS_TEMP && rm $SAMPLE_TEMP
+                head -n 1 $IPS_TEMP > IP.txt && rm $IPS_TEMP
                 cd ..
             done
         done
@@ -241,7 +241,7 @@ function ADBhoney(){
                 editcap -A "$(cat $TIME_0)" -B "$(cat $TIME_N)" $PCAP $SAMPLE_TEMP
                 tcpdump -r $SAMPLE_TEMP -w $SAMPLE host $(sed '2,$d' $IPS_TEMP)
                 awk 'NR>1{print}' $IPS_TEMP > ../$IPS_TEMP 
-                head -n 1 $IPS_TEMP > IP.txt && rm $IPS_TEMP && rm $SAMPLE_TEMP
+                head -n 1 $IPS_TEMP > IP.txt && rm $IPS_TEMP
                 cd ..
             done
         done
