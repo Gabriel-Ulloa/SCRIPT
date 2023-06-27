@@ -93,7 +93,7 @@ function CHOUR(){
 #
 echo >> $CRON_DIR
 echo "#Stop tcpdump & check captures everyday" >> $CRON_DIR
-echo $(CMIN)  $(expr $(CHOUR) - 2) "* * *      root    killall tcpdump && sleep 30 && /home/tsec/SCRIPT/checker.sh" >> $CRON_DIR
+echo $(CMIN)  $(expr $(CHOUR) - 1) "* * *      root    killall tcpdump && sleep 30 && /home/tsec/SCRIPT/checker.sh" >> $CRON_DIR
 #Finished
 toilet -f ivrit '...Instalado'
 sleep 3
